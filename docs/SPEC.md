@@ -38,20 +38,56 @@ Sale ─(รหัสผ่าน)─> Vercel: หน้ารายการ cr
 ### 3. หน้า Sale
 - การ์ดแยก ลูกค้า → line item → creative: thumbnail, ขนาด, slot, วันสิ้นสุด
 - ค้นหา / กรองตามลูกค้า
-- **เลือกหน้าปลายทาง:** dropdown หน้าที่ตั้งไว้ (หน้าแรก, หน้าหมวด, ข่าวล่าสุด) + ช่องวาง URL เอง
-  - ค่าเริ่มต้นเดาจาก targeting: ad unit `Homepage_*` → `/`, key-value `category` → `/<category>/`, อื่น ๆ → หน้าแรก
-- ปุ่ม **เปิด Desktop** / **เปิด Mobile** (Mobile = เปิดหน้าต่างขนาด 390×844 ให้แคปด้วย DevTools/มือถือจริง)
+- **เลือกหน้าปลายทางได้หลายหน้าพร้อมกัน** (checkbox) จาก `config/pages.json` + ช่อง Custom (ใส่ได้หลาย URL บรรทัดละ 1, รับทั้ง path และ URL เต็มของ dailynews.co.th)
+  - ค่าเริ่มต้นติ๊กจาก targeting: key-value `category` → หน้าหมวดนั้น, ไม่ระบุ → Homepage
+  - ปุ่ม "เลือกทั้งหมด / ล้าง"
+- เลือก creative ได้หลายตัว × หลายหน้า → สร้าง **รายการลิงก์** (หน้า × creative) แต่ละแถวมีปุ่มเปิด + ปุ่ม **เปิดทั้งหมด** (เปิดแท็บทีละหน้า; ครั้งแรกเบราว์เซอร์จะถามให้อนุญาต pop-up)
+- creative หลายตัวที่อยู่คนละ slot → รวมใน token เดียวได้ (1 หน้าแสดงได้ทั้ง 3 slot พร้อมกัน)
+- ปุ่ม **Desktop** / **Mobile** (Mobile = หน้าต่างขนาด 390×844 ให้แคปด้วย DevTools/มือถือจริง)
+
+#### `config/pages.json`
+| ชื่อ | path |
+|---|---|
+| Homepage | `/` |
+| ทั่วไทย | `/regional/` |
+| กทม. | `/bangkok/` |
+| อาชญากรรม | `/crime/` |
+| การเมือง | `/politics/` |
+| เศรษฐกิจ | `/economic/` |
+| บันเทิง | `/entertainment/` |
+| กีฬา | `/sport/` |
+| ต่างประเทศ | `/foreign/` |
+| ไลฟ์สไตล์ | `/lifestyle/` |
+| นวัตกรรมขนส่ง | `/transport/` |
+| ยานยนต์ | `/auto/` |
+| เทคโนโลยี | `/technology/` |
+| การศึกษา-ศาสนา | `/education/` |
+| สังคม | `/society/` |
+| ท้องถิ่น | `/local/` |
+| เกษตร | `/agriculture/` |
+| Sustain Daily | `/sustainable/` |
+| Daily Beauty | `/beauty/` |
+| People | `/people/` |
+| หมวดพิเศษ | `/special/` |
+| ดวง-มูเตลู | `/horoscope/` |
+| Custom | ผู้ใช้กรอกเอง |
 
 ### 4. Slot mapping
-ทุกหน้ามี 3 div เท่านั้น: `div-ads-leaderboard`, `div-ads-sticky`, `div-ads-postarticle`
-- map จากชื่อ ad unit ที่ line item target ไว้ ด้วยตาราง `config/slots.json` เช่น
-  `Regional_Leaderboard → leaderboard`, `Homepage_2ndRectangle → postarticle`
-- ad unit ไม่อยู่ในตาราง → เดาจากขนาด (กว้าง ≥ 728 → leaderboard) และให้ Sale เลือก slot เองบนการ์ด
-- line item target หลาย ad unit → มีปุ่มแยกต่อ slot
+ทุกหน้าใช้ ad unit 3 ตัวเท่านั้น (`config/slots.json`):
+
+| div | Ad unit | ID | Code |
+|---|---|---|---|
+| `div-ads-leaderboard` | Regional_Leaderboard | 90751040 | `Regional_Leaderboard` |
+| `div-ads-sticky` | Regional_Rectangle | 90751160 | `Regional_Rectangle(S2)` |
+| `div-ads-postarticle` | Regional_Postarticle | 23196688839 | `regional_postarticle` |
+
+- map ด้วย **ad unit ID** จาก inventory targeting ของ line item (ไม่พึ่งชื่อ)
+- line item target ad unit แม่ / ไม่ได้ target 3 ตัวนี้ → ให้ Sale เลือก slot เองบนการ์ด (เดาเริ่มต้นจากขนาด: กว้าง ≥ 728 → leaderboard)
+- line item target หลาย ad unit → เลือก slot ได้ตามที่ target
 
 ### 5. `/api/mock/<token>` (public)
-- token = HMAC(`MOCK_SECRET`) ของ `{creativeId, slot, exp}` · หมดอายุ 24 ชม.
-- คืนค่า `{slot, type, width, height, imageUrl | html5Url, clickUrl}` ของ creative เดียว — ไม่มีชื่อลูกค้า
+- token = HMAC(`MOCK_SECRET`) ของ `{items: [{creativeId, slot}], exp}` · หมดอายุ 24 ชม. · สูงสุด 1 creative ต่อ slot
+- คืนค่า `[{slot, type, width, height, imageUrl | html5Url, clickUrl}]` — ไม่มีชื่อลูกค้า
 - HTML5: proxy bundle จาก GAM แสดงใน iframe ขนาดเท่า creative
 - CORS: อนุญาตเฉพาะ `https://www.dailynews.co.th`
 
@@ -69,5 +105,4 @@ Sale ─(รหัสผ่าน)─> Vercel: หน้ารายการ cr
 Next.js (App Router) + TypeScript · GAM SOAP API v202x ผ่าน `google-auth-library` + เรียก SOAP เอง (ไม่มี SDK ทางการสำหรับ Node)
 
 ## คำถามที่ยังเปิด
-- รายชื่อ ad unit ทั้งหมดใน GAM เพื่อทำ `config/slots.json`
-- รายการหน้าปลายทางที่ใช้บ่อย สำหรับ dropdown
+- (ปิดแล้ว) ad unit 3 ตัว และรายการหน้าปลายทาง — 11 พ.ย. 2026
