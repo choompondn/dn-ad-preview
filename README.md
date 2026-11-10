@@ -34,7 +34,7 @@
 | `APP_PASSWORD` | รหัสผ่านที่จะให้ Sale |
 | `MOCK_SECRET` | สุ่มยาว ๆ เช่น `openssl rand -hex 32` |
 | `SITE_ORIGIN` | `https://www.dailynews.co.th` |
-| `GAM_API_VERSION` | (ไม่บังคับ) ค่าเริ่มต้น `v202508` — ถ้า GAM แจ้งว่าเวอร์ชันหมดอายุ ให้ใส่เวอร์ชันล่าสุด |
+| `GAM_API_VERSION` | (ไม่บังคับ) ค่าเริ่มต้น `v202608` — ถ้า GAM แจ้งว่าเวอร์ชันหมดอายุ ให้ใส่เวอร์ชันล่าสุด |
 
 3. Deploy → เปิดเว็บ ใส่รหัส ต้องเห็นรายการ creative
 
