@@ -85,7 +85,9 @@ Sale ─(รหัสผ่าน)─> Vercel: หน้ารายการ cr
 - line item target ad unit แม่ / ไม่ได้ target 3 ตัวนี้ → ให้ Sale เลือก slot เองบนการ์ด (เดาเริ่มต้นจากขนาด: กว้าง ≥ 728 → leaderboard)
 - line item target หลาย ad unit → เลือก slot ได้ตามที่ target
 
-### 5. `/api/mock/<token>` (public)
+> **เปลี่ยนตอนลงมือ (v1.2):** ไม่ใช้ `/api/mock` แล้ว — token บรรจุข้อมูล creative เอง และ `wp/dn-ad-preview.php` ตรวจลายเซ็นฝั่ง PHP (secret ร่วม `DN_AD_PREVIEW_SECRET` = `MOCK_SECRET`) จึงรู้ก่อนโหลด GPT ว่าจะ mock slot ไหน ไม่มี ad request หลุด · Stack เป็น Node ล้วนไม่มี dependency (ไม่ใช้ Next.js) · ดู README
+
+### 5. `/api/mock/<token>` (public) — ยกเลิก ดูหมายเหตุข้างบน
 - token = HMAC(`MOCK_SECRET`) ของ `{items: [{creativeId, slot}], exp}` · หมดอายุ 24 ชม. · สูงสุด 1 creative ต่อ slot
 - คืนค่า `[{slot, type, width, height, imageUrl | html5Url, clickUrl}]` — ไม่มีชื่อลูกค้า
 - HTML5: proxy bundle จาก GAM แสดงใน iframe ขนาดเท่า creative

@@ -1,0 +1,5 @@
+[
+  { "slot": "leaderboard", "div": "div-ads-leaderboard", "adUnitId": "90751040", "name": "Regional_Leaderboard" },
+  { "slot": "sticky", "div": "div-ads-sticky", "adUnitId": "90751160", "name": "Regional_Rectangle" },
+  { "slot": "postarticle", "div": "div-ads-postarticle", "adUnitId": "23196688839", "name": "Regional_Postarticle" }
+]

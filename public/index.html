@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>DN Ad Preview</title>
+<style>
+  :root { --bg:#f6f6f4; --card:#fff; --ink:#1d1d1b; --mute:#6b6b66; --line:#e3e2dd; --acc:#c8102e; --ok:#1a7f4b; }
+  * { box-sizing: border-box; }
+  body { margin:0; font:15px/1.5 "Sarabun","Noto Sans Thai",system-ui,sans-serif; background:var(--bg); color:var(--ink); }
+  header { display:flex; align-items:center; gap:12px; padding:14px 20px; background:var(--ink); color:#fff; position:sticky; top:0; z-index:5; }
+  header h1 { font-size:18px; margin:0; } header .sp { flex:1; } header small { opacity:.7; }
+  button { font:inherit; cursor:pointer; border:1px solid var(--line); background:#fff; border-radius:8px; padding:7px 12px; }
+  button.pri { background:var(--acc); color:#fff; border-color:var(--acc); }
+  button:disabled { opacity:.5; cursor:default; }
+  main { display:grid; grid-template-columns: 1fr 360px; gap:20px; padding:20px; max-width:1400px; margin:0 auto; }
+  @media (max-width: 900px) { main { grid-template-columns: 1fr; } }
+  .panel { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:16px; }
+  aside .panel { position:sticky; top:76px; }
+  h2 { font-size:16px; margin:0 0 10px; }
+  input[type=search], textarea, input[type=password] { width:100%; font:inherit; padding:8px 10px; border:1px solid var(--line); border-radius:8px; }
+  .adv { margin:18px 0 6px; font-weight:700; font-size:17px; }
+  .li { border:1px solid var(--line); border-radius:10px; margin:8px 0; background:var(--card); }
+  .li > .hd { padding:10px 12px; border-bottom:1px solid var(--line); display:flex; gap:8px; flex-wrap:wrap; align-items:baseline; }
+  .li > .hd b { font-weight:600; } .mute { color:var(--mute); font-size:13px; }
+  .crs { display:grid; grid-template-columns: repeat(auto-fill, minmax(200px,1fr)); gap:10px; padding:10px; }
+  .cr { border:2px solid var(--line); border-radius:10px; padding:8px; display:flex; flex-direction:column; gap:6px; cursor:pointer; }
+  .cr.sel { border-color:var(--acc); background:#fff6f7; }
+  .cr.off { opacity:.5; cursor:not-allowed; }
+  .thumb { height:110px; display:flex; align-items:center; justify-content:center; background:#f0efeb; border-radius:6px; overflow:hidden; }
+  .thumb img { max-width:100%; max-height:110px; }
+  .tag { display:inline-block; font-size:12px; padding:1px 7px; border-radius:99px; background:#eee; }
+  .tag.warn { background:#fff1cc; }
+  select { font:inherit; padding:4px; border-radius:6px; border:1px solid var(--line); }
+  .pages { display:grid; grid-template-columns: 1fr 1fr; gap:2px 10px; max-height:280px; overflow:auto; margin:8px 0; font-size:14px; }
+  .row { display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin:8px 0; }
+  .seg button.on { background:var(--ink); color:#fff; border-color:var(--ink); }
+  .links { margin-top:10px; max-height:260px; overflow:auto; font-size:13px; }
+  .links a { display:block; padding:4px 0; border-bottom:1px dashed var(--line); color:var(--ink); word-break:break-all; }
+  #login { max-width:340px; margin:12vh auto; }
+  .err { color:var(--acc); font-size:14px; min-height:1.2em; }
+  .empty { padding:40px; text-align:center; color:var(--mute); }
+</style>
+</head>
+<body>
+<div id="login" class="panel" hidden>
+  <h2>DN Ad Preview</h2>
+  <form id="lf"><input type="password" id="pw" placeholder="รหัสผ่าน" autofocus>
+  <div class="row"><button class="pri">เข้าสู่ระบบ</button></div><div class="err" id="lerr"></div></form>
+</div>
+
+<div id="app" hidden>
+  <header><h1>DN Ad Preview</h1><small id="meta"></small><span class="sp"></span>
+    <button id="refresh">รีเฟรชจาก GAM</button></header>
+  <main>
+    <section>
+      <input type="search" id="q" placeholder="ค้นหาลูกค้า / line item / creative">
+      <div id="list"><div class="empty">กำลังโหลด…</div></div>
+    </section>
+    <aside><div class="panel">
+      <h2>1. Creative ที่เลือก: <span id="nsel">0</span></h2>
+      <div class="row"><button id="clearSel">ล้างที่เลือก</button></div>
+      <h2>2. หน้าปลายทาง</h2>
+      <div class="row"><button id="allP">เลือกทั้งหมด</button><button id="noP">ล้าง</button></div>
+      <div class="pages" id="pages"></div>
+      <textarea id="custom" rows="3" placeholder="Custom: วาง URL หรือ path บรรทัดละ 1 เช่น /news/123456/"></textarea>
+      <h2 style="margin-top:12px">3. อุปกรณ์</h2>
+      <div class="row seg"><button data-dev="desktop" class="on">Desktop</button><button data-dev="mobile">Mobile</button></div>
+      <div class="row"><button class="pri" id="make">สร้างลิงก์</button><button id="openAll" disabled>เปิดทั้งหมด</button></div>
+      <div class="err" id="aerr"></div>
+      <div class="links" id="links"></div>
+    </div></aside>
+  </main>
+</div>
+
+<script>
+const $ = (s) => document.querySelector(s);
+const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[c]));
+const SLOT_TH = { leaderboard: 'Leaderboard', sticky: 'Sticky', postarticle: 'Postarticle' };
+let DATA = null, device = 'desktop', links = [];
+const sel = new Map(); // key creativeId|lineItemId → { item, slot }
+
+async function api(path, opts) {
+  const r = await fetch(path, { credentials: 'same-origin', ...opts });
+  if (r.status === 401) { showLogin(); throw new Error('unauthorized'); }
+  const j = await r.json();
+  if (!r.ok) throw new Error(j.error || r.status);
+  return j;
+}
+function showLogin() { $('#app').hidden = true; $('#login').hidden = false; $('#pw').focus(); }
+
+$('#lf').onsubmit = async (e) => {
+  e.preventDefault(); $('#lerr').textContent = '';
+  const r = await fetch('/api/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ password: $('#pw').value }) });
+  if (!r.ok) { $('#lerr').textContent = 'รหัสผ่านไม่ถูกต้อง'; return; }
+  $('#login').hidden = true; load();
+};
+
+async function load(refresh) {
+  $('#app').hidden = false;
+  $('#list').innerHTML = '<div class="empty">กำลังดึงข้อมูลจาก GAM…</div>';
+  try {
+    DATA = await api('/api/creatives' + (refresh ? '?refresh=1' : ''));
+  } catch (e) { if (e.message !== 'unauthorized') $('#list').innerHTML = `<div class="empty">ดึงข้อมูลไม่สำเร็จ: ${esc(e.message)}</div>`; return; }
+  $('#meta').textContent = `วันที่ ${DATA.today} · อัปเดต ${new Date(DATA.fetchedAt).toLocaleTimeString('th-TH')}`;
+  if (!$('#pages').children.length) renderPages();
+  renderList();
+}
+
+function renderPages() {
+  $('#pages').innerHTML = DATA.pages.map((p, i) =>
+    `<label><input type="checkbox" value="${esc(p.path)}" data-cat="${esc(p.category || '')}" ${i === 0 ? 'checked' : ''}> ${esc(p.name)}</label>`).join('');
+}
+
+function renderList() {
+  const q = $('#q').value.trim().toLowerCase();
+  const items = DATA.items.filter((it) => !q || [it.advertiser, it.lineItemName, it.creativeName, it.orderName].join(' ').toLowerCase().includes(q));
+  if (!items.length) { $('#list').innerHTML = '<div class="empty">ไม่พบ creative ที่ Active วันนี้</div>'; return; }
+  const byAdv = new Map();
+  for (const it of items) {
+    if (!byAdv.has(it.advertiser)) byAdv.set(it.advertiser, new Map());
+    const m = byAdv.get(it.advertiser);
+    if (!m.has(it.lineItemId)) m.set(it.lineItemId, []);
+    m.get(it.lineItemId).push(it);
+  }
+  let h = '';
+  for (const [adv, lis] of byAdv) {
+    h += `<div class="adv">${esc(adv)}</div>`;
+    for (const [, crs] of lis) {
+      const li = crs[0];
+      h += `<div class="li"><div class="hd"><b>${esc(li.lineItemName)}</b><span class="mute">${esc(li.orderName)} · ${esc(li.start || '')} → ${esc(li.end || 'ไม่สิ้นสุด')} · ${esc(li.lineItemStatus)}</span></div><div class="crs">`;
+      for (const it of crs) {
+        const key = it.creativeId + '|' + it.lineItemId;
+        const s = sel.get(key);
+        const slot = s ? s.slot : it.slots[0];
+        const slotOpts = (it.slotGuessed ? Object.keys(SLOT_TH) : it.slots)
+          .map((x) => `<option value="${x}" ${x === slot ? 'selected' : ''}>${SLOT_TH[x]}</option>`).join('');
+        h += `<div class="cr ${s ? 'sel' : ''} ${it.supported ? '' : 'off'}" data-key="${esc(key)}">
+          <div class="thumb">${it.type === 'img' ? `<img src="${esc(it.url)}" loading="lazy" alt="">` : `<span class="mute">${it.type === 'html5' ? 'HTML5' : 'ไม่รองรับ'}</span>`}</div>
+          <div style="font-size:13px">${esc(it.creativeName)}</div>
+          <div><span class="tag">${it.w}×${it.h}</span> ${it.slotGuessed ? '<span class="tag warn">เลือก slot เอง</span>' : ''}</div>
+          ${it.supported ? `<select data-slot="${esc(key)}">${slotOpts}</select>` : ''}
+        </div>`;
+      }
+      h += '</div></div>';
+    }
+  }
+  $('#list').innerHTML = h;
+}
+
+$('#list').addEventListener('click', (e) => {
+  if (e.target.tagName === 'SELECT' || e.target.tagName === 'OPTION') return;
+  const card = e.target.closest('.cr'); if (!card || card.classList.contains('off')) return;
+  const key = card.dataset.key;
+  if (sel.has(key)) sel.delete(key);
+  else {
+    const it = DATA.items.find((x) => x.creativeId + '|' + x.lineItemId === key);
+    sel.set(key, { item: it, slot: card.querySelector('select').value });
+    // ติ๊กหน้าหมวดตาม targeting ของ line item
+    for (const c of it.categories || []) { const cb = $(`#pages input[data-cat="${c}"]`); if (cb) cb.checked = true; }
+  }
+  card.classList.toggle('sel', sel.has(key));
+  $('#nsel').textContent = sel.size;
+});
+$('#list').addEventListener('change', (e) => {
+  const key = e.target.dataset.slot; if (!key) return;
+  if (sel.has(key)) sel.get(key).slot = e.target.value;
+});
+$('#q').oninput = renderList;
+$('#refresh').onclick = () => load(true);
+$('#clearSel').onclick = () => { sel.clear(); $('#nsel').textContent = 0; renderList(); };
+$('#allP').onclick = () => document.querySelectorAll('#pages input').forEach((c) => (c.checked = true));
+$('#noP').onclick = () => document.querySelectorAll('#pages input').forEach((c) => (c.checked = false));
+document.querySelectorAll('.seg button').forEach((b) => (b.onclick = () => {
+  device = b.dataset.dev; document.querySelectorAll('.seg button').forEach((x) => x.classList.toggle('on', x === b));
+}));
+
+function targetUrls() {
+  const site = DATA.site.replace(/\/$/, '');
+  const out = [...document.querySelectorAll('#pages input:checked')].map((c) => site + c.value);
+  for (let line of $('#custom').value.split('\n')) {
+    line = line.trim(); if (!line) continue;
+    if (line.startsWith('/')) out.push(site + line);
+    else { try { const u = new URL(line); if (u.hostname.endsWith('dailynews.co.th')) out.push(u.origin + u.pathname + u.search); } catch {} }
+  }
+  return [...new Set(out)];
+}
+
+// แบ่ง creative ที่เลือกเป็นชุด โดย 1 ชุดมีได้ไม่เกิน 1 creative ต่อ slot
+function groups() {
+  const sets = [];
+  for (const { item, slot } of sel.values()) {
+    let g = sets.find((s) => !s.some((x) => x.slot === slot));
+    if (!g) sets.push((g = []));
+    g.push({ slot, item });
+  }
+  return sets;
+}
+
+$('#make').onclick = async () => {
+  $('#aerr').textContent = ''; $('#links').innerHTML = ''; links = []; $('#openAll').disabled = true;
+  const urls = targetUrls(), sets = groups();
+  if (!sets.length) return ($('#aerr').textContent = 'ยังไม่ได้เลือก creative');
+  if (!urls.length) return ($('#aerr').textContent = 'ยังไม่ได้เลือกหน้าปลายทาง');
+  try {
+    for (const g of sets) {
+      const { token } = await api('/api/sign', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ items: g.map(({ slot, item }) => ({ slot, type: item.type, w: item.w, h: item.h, url: item.url, clickUrl: item.clickUrl })) }) });
+      const label = g.map((x) => `${SLOT_TH[x.slot]}: ${x.item.creativeName}`).join(' + ');
+      for (const u of urls) links.push({ href: u + (u.includes('?') ? '&' : '?') + 'dn_mock=' + encodeURIComponent(token), label, page: u });
+    }
+  } catch (e) { $('#aerr').textContent = 'สร้างลิงก์ไม่สำเร็จ: ' + e.message; return; }
+  $('#links').innerHTML = links.map((l, i) => `<a href="${esc(l.href)}" data-i="${i}" target="_blank" rel="noopener">${esc(l.page.replace(/^https:\/\/[^/]+/, ''))}<br><span class="mute">${esc(l.label)}</span></a>`).join('');
+  $('#openAll').disabled = false;
+};
+
+function openLink(href, i) {
+  if (device === 'mobile') return window.open(href, 'dnap' + i, 'width=390,height=844');
+  return window.open(href, '_blank');
+}
+$('#links').addEventListener('click', (e) => {
+  const a = e.target.closest('a'); if (!a || device !== 'mobile') return;
+  e.preventDefault(); openLink(a.href, a.dataset.i);
+});
+$('#openAll').onclick = () => {
+  let blocked = 0;
+  links.forEach((l, i) => { if (!openLink(l.href, i)) blocked++; });
+  if (blocked) $('#aerr').textContent = `เบราว์เซอร์บล็อก ${blocked} หน้า — กดอนุญาต pop-up ของเว็บนี้ แล้วกดอีกครั้ง`;
+};
+
+load();
+</script>
+</body>
+</html>
