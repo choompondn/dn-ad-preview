@@ -5,69 +5,122 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
 <title>DN Ad Preview</title>
+<script>
+  // theme ก่อน paint: ค่าที่เลือกไว้ หรือตามระบบ
+  (function(){ var t; try { t = localStorage.getItem('dnap-theme'); } catch (e) {}
+    if (!t) t = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    document.documentElement.dataset.theme = t; })();
+</script>
 <style>
-  :root { --bg:#f6f6f4; --card:#fff; --ink:#1d1d1b; --mute:#6b6b66; --line:#e3e2dd; --acc:#c8102e; --ok:#1a7f4b; }
-  * { box-sizing: border-box; }
-  body { margin:0; font:15px/1.5 "Sarabun","Noto Sans Thai",system-ui,sans-serif; background:var(--bg); color:var(--ink); }
-  header { display:flex; align-items:center; gap:12px; padding:14px 20px; background:var(--ink); color:#fff; position:sticky; top:0; z-index:5; }
-  header h1 { font-size:18px; margin:0; } header .sp { flex:1; } header small { opacity:.7; }
-  button { font:inherit; cursor:pointer; border:1px solid var(--line); background:#fff; border-radius:8px; padding:7px 12px; }
-  button.pri { background:var(--acc); color:#fff; border-color:var(--acc); }
-  button:disabled { opacity:.5; cursor:default; }
-  main { display:grid; grid-template-columns: 1fr 360px; gap:20px; padding:20px; max-width:1400px; margin:0 auto; }
-  @media (max-width: 900px) { main { grid-template-columns: 1fr; } }
-  .panel { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:16px; }
-  aside .panel { position:sticky; top:76px; }
-  h2 { font-size:16px; margin:0 0 10px; }
-  input[type=search], textarea, input[type=password] { width:100%; font:inherit; padding:8px 10px; border:1px solid var(--line); border-radius:8px; }
-  .adv { margin:18px 0 6px; font-weight:700; font-size:17px; }
-  .li { border:1px solid var(--line); border-radius:10px; margin:8px 0; background:var(--card); }
-  .li > .hd { padding:10px 12px; border-bottom:1px solid var(--line); display:flex; gap:8px; flex-wrap:wrap; align-items:baseline; }
+  :root {
+    --bg:#f5f6f8; --surface:#ffffff; --surface-2:#f0f2f5; --ink:#0f1115; --mute:#667085; --line:#e4e7ec;
+    --acc:#e11d48; --acc-ink:#fff; --acc-soft:rgba(225,29,72,.08); --ok:#12b76a; --warn-bg:#fef3c7; --warn-ink:#92400e;
+    --shadow:0 1px 2px rgba(16,24,40,.04), 0 4px 16px rgba(16,24,40,.06); --radius:14px;
+    --dev-d:#2563eb; --dev-m:#7c3aed;
+  }
+  [data-theme=dark] {
+    --bg:#0b0d12; --surface:#141821; --surface-2:#1b2030; --ink:#e7e9ee; --mute:#8b93a7; --line:#262c3a;
+    --acc:#fb7185; --acc-ink:#1b0a0f; --acc-soft:rgba(251,113,133,.12); --warn-bg:#3a2a0a; --warn-ink:#fcd34d;
+    --shadow:0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.35); --dev-d:#60a5fa; --dev-m:#a78bfa;
+  }
+  * { box-sizing:border-box; }
+  html { color-scheme: light dark; }
+  body { margin:0; font:15px/1.55 "Sarabun","Noto Sans Thai","IBM Plex Sans Thai",system-ui,sans-serif; background:var(--bg); color:var(--ink); transition:background .2s,color .2s; }
+  header { display:flex; align-items:center; gap:14px; padding:12px 24px; position:sticky; top:0; z-index:5;
+    background:color-mix(in srgb, var(--surface) 82%, transparent); backdrop-filter:blur(12px); border-bottom:1px solid var(--line); }
+  .brand { display:flex; align-items:center; gap:10px; font-weight:700; font-size:17px; letter-spacing:-.01em; }
+  .logo { width:28px; height:28px; border-radius:8px; background:linear-gradient(135deg,var(--acc),#f97316); display:grid; place-items:center; color:#fff; font-size:13px; font-weight:800; }
+  header .sp { flex:1; } #meta { color:var(--mute); font-size:13px; }
+  button { font:inherit; font-size:14px; cursor:pointer; border:1px solid var(--line); background:var(--surface); color:var(--ink);
+    border-radius:10px; padding:7px 14px; transition:background .15s, border-color .15s, transform .05s; }
+  button:hover:not(:disabled) { background:var(--surface-2); }
+  button:active:not(:disabled) { transform:translateY(1px); }
+  button.pri { background:var(--acc); color:var(--acc-ink); border-color:transparent; font-weight:600; }
+  button.pri:hover:not(:disabled) { background:var(--acc); filter:brightness(1.07); }
+  button.ghost { border-color:transparent; background:transparent; color:var(--mute); padding:6px 10px; }
+  button:disabled { opacity:.45; cursor:default; }
+  .icon { width:36px; height:36px; padding:0; display:grid; place-items:center; font-size:16px; }
+  main { display:grid; grid-template-columns:1fr 380px; gap:24px; padding:24px; max-width:1440px; margin:0 auto; }
+  @media (max-width:960px) { main { grid-template-columns:1fr; } aside .panel { position:static !important; } }
+  .panel { background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); padding:20px; box-shadow:var(--shadow); }
+  aside .panel { position:sticky; top:84px; max-height:calc(100vh - 108px); overflow:auto; }
+  .step { display:flex; align-items:center; gap:10px; font-size:15px; font-weight:600; margin:18px 0 10px; }
+  .step:first-child { margin-top:0; }
+  .num { width:22px; height:22px; border-radius:50%; background:var(--acc-soft); color:var(--acc); display:grid; place-items:center; font-size:12px; font-weight:700; }
+  .count { margin-left:auto; font-size:12px; font-weight:600; background:var(--surface-2); color:var(--mute); padding:2px 9px; border-radius:99px; }
+  .count.on { background:var(--acc); color:var(--acc-ink); }
+  input[type=search], textarea, input[type=password] { width:100%; font:inherit; color:var(--ink); background:var(--surface); padding:10px 14px;
+    border:1px solid var(--line); border-radius:10px; outline:none; transition:border-color .15s, box-shadow .15s; }
+  input:focus, textarea:focus, select:focus { border-color:var(--acc); box-shadow:0 0 0 3px var(--acc-soft); }
+  .search { position:sticky; top:72px; z-index:4; padding-bottom:6px; background:linear-gradient(var(--bg) 80%, transparent); }
+  .adv { margin:26px 0 10px; font-weight:700; font-size:18px; letter-spacing:-.01em; display:flex; align-items:center; gap:10px; }
+  .adv::before { content:""; width:4px; height:18px; border-radius:2px; background:var(--acc); }
+  .li { border:1px solid var(--line); border-radius:var(--radius); margin:10px 0; background:var(--surface); box-shadow:var(--shadow); overflow:hidden; }
+  .li > .hd { padding:12px 16px; border-bottom:1px solid var(--line); display:flex; gap:10px; flex-wrap:wrap; align-items:baseline; }
   .li > .hd b { font-weight:600; } .mute { color:var(--mute); font-size:13px; }
-  .crs { display:grid; grid-template-columns: repeat(auto-fill, minmax(200px,1fr)); gap:10px; padding:10px; }
-  .cr { border:2px solid var(--line); border-radius:10px; padding:8px; display:flex; flex-direction:column; gap:6px; cursor:pointer; }
-  .cr.sel { border-color:var(--acc); background:#fff6f7; }
-  .cr.off { opacity:.5; cursor:not-allowed; }
-  .thumb { height:110px; display:flex; align-items:center; justify-content:center; background:#f0efeb; border-radius:6px; overflow:hidden; }
-  .thumb img { max-width:100%; max-height:110px; }
-  .tag { display:inline-block; font-size:12px; padding:1px 7px; border-radius:99px; background:#eee; }
-  .tag.warn { background:#fff1cc; }
-  select { font:inherit; padding:4px; border-radius:6px; border:1px solid var(--line); }
-  .pages { display:grid; grid-template-columns: 1fr 1fr; gap:2px 10px; max-height:280px; overflow:auto; margin:8px 0; font-size:14px; }
+  .crs { display:grid; grid-template-columns:repeat(auto-fill,minmax(210px,1fr)); gap:12px; padding:14px; }
+  .cr { position:relative; border:1.5px solid var(--line); border-radius:12px; padding:10px; display:flex; flex-direction:column; gap:8px; cursor:pointer;
+    background:var(--surface); transition:border-color .15s, box-shadow .15s, transform .15s; }
+  .cr:hover:not(.off) { transform:translateY(-2px); box-shadow:var(--shadow); }
+  .cr.sel { border-color:var(--acc); background:var(--acc-soft); }
+  .cr.sel::after { content:"✓"; position:absolute; top:8px; right:8px; width:22px; height:22px; border-radius:50%; background:var(--acc); color:var(--acc-ink); display:grid; place-items:center; font-size:12px; font-weight:800; }
+  .cr.off { opacity:.45; cursor:not-allowed; }
+  .thumb { height:120px; display:flex; align-items:center; justify-content:center; border-radius:8px; overflow:hidden;
+    background:repeating-conic-gradient(var(--surface-2) 0 25%, transparent 0 50%) 0 0/16px 16px; }
+  .thumb img { max-width:100%; max-height:120px; }
+  .cname { font-size:13px; font-weight:500; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .tag { display:inline-block; font-size:11.5px; font-weight:600; padding:2px 8px; border-radius:99px; background:var(--surface-2); color:var(--mute); }
+  .tag.warn { background:var(--warn-bg); color:var(--warn-ink); }
+  .tag.d { background:color-mix(in srgb, var(--dev-d) 14%, transparent); color:var(--dev-d); }
+  .tag.m { background:color-mix(in srgb, var(--dev-m) 14%, transparent); color:var(--dev-m); }
+  select { font:inherit; font-size:13px; color:var(--ink); background:var(--surface); padding:6px 8px; border-radius:8px; border:1px solid var(--line); }
+  .pages { display:grid; grid-template-columns:1fr 1fr; gap:4px; max-height:260px; overflow:auto; margin:8px 0; font-size:14px; }
+  .pages label { display:flex; align-items:center; gap:8px; padding:5px 8px; border-radius:8px; cursor:pointer; }
+  .pages label:hover { background:var(--surface-2); }
+  input[type=checkbox] { accent-color:var(--acc); width:16px; height:16px; }
   .row { display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin:8px 0; }
-  .seg button.on { background:var(--ink); color:#fff; border-color:var(--ink); }
-  .links { margin-top:10px; max-height:260px; overflow:auto; font-size:13px; }
-  .links a { display:block; padding:4px 0; border-bottom:1px dashed var(--line); color:var(--ink); word-break:break-all; }
-  #login { max-width:340px; margin:12vh auto; }
-  .err { color:var(--acc); font-size:14px; min-height:1.2em; }
-  .empty { padding:40px; text-align:center; color:var(--mute); }
+  .seg { display:inline-flex; padding:3px; gap:2px; background:var(--surface-2); border-radius:12px; }
+  .seg button { border:0; background:transparent; border-radius:9px; padding:6px 14px; color:var(--mute); }
+  .seg button.on { background:var(--surface); color:var(--ink); box-shadow:var(--shadow); font-weight:600; }
+  .grow { flex:1; }
+  .links { margin-top:12px; display:flex; flex-direction:column; gap:6px; }
+  .links a { display:flex; gap:10px; align-items:flex-start; padding:10px 12px; border:1px solid var(--line); border-radius:10px; color:var(--ink); text-decoration:none; transition:background .15s, border-color .15s; }
+  .links a:hover { background:var(--surface-2); border-color:var(--acc); }
+  .links .p { font-weight:600; font-size:13.5px; word-break:break-all; }
+  .links .l { font-size:12px; color:var(--mute); }
+  #login { max-width:380px; margin:14vh auto; }
+  #login .brand { margin-bottom:16px; }
+  .err { color:var(--acc); font-size:13.5px; min-height:1.2em; }
+  .empty { padding:56px 20px; text-align:center; color:var(--mute); }
+  ::-webkit-scrollbar { width:10px; height:10px; } ::-webkit-scrollbar-thumb { background:var(--line); border-radius:99px; border:2px solid var(--surface); }
 </style>
 </head>
 <body>
 <div id="login" class="panel" hidden>
-  <h2>DN Ad Preview</h2>
+  <div class="brand"><span class="logo">DN</span>Ad Preview</div>
   <form id="lf"><input type="password" id="pw" placeholder="รหัสผ่าน" autofocus>
-  <div class="row"><button class="pri">เข้าสู่ระบบ</button></div><div class="err" id="lerr"></div></form>
+  <div class="row"><button class="pri grow">เข้าสู่ระบบ</button></div><div class="err" id="lerr"></div></form>
 </div>
 
 <div id="app" hidden>
-  <header><h1>DN Ad Preview</h1><small id="meta"></small><span class="sp"></span>
-    <button id="refresh">รีเฟรชจาก GAM</button></header>
+  <header><div class="brand"><span class="logo">DN</span>Ad Preview</div><span id="meta"></span><span class="sp"></span>
+    <button id="refresh">↻ รีเฟรชจาก GAM</button>
+    <button id="theme" class="icon" title="สลับโหมดสว่าง/มืด" aria-label="สลับโหมดสว่าง/มืด"></button></header>
   <main>
     <section>
-      <input type="search" id="q" placeholder="ค้นหาลูกค้า / line item / creative">
+      <div class="search"><input type="search" id="q" placeholder="ค้นหาลูกค้า / line item / creative"></div>
       <div id="list"><div class="empty">กำลังโหลด…</div></div>
     </section>
     <aside><div class="panel">
-      <h2>1. Creative ที่เลือก: <span id="nsel">0</span></h2>
-      <div class="row"><button id="clearSel">ล้างที่เลือก</button></div>
-      <h2>2. หน้าปลายทาง</h2>
-      <div class="row"><button id="allP">เลือกทั้งหมด</button><button id="noP">ล้าง</button></div>
+      <div class="step"><span class="num">1</span>Creative ที่เลือก<span class="count" id="nsel">0</span></div>
+      <div class="row"><button id="clearSel" class="ghost">ล้างที่เลือก</button></div>
+      <div class="step"><span class="num">2</span>หน้าปลายทาง</div>
+      <div class="row"><button id="allP" class="ghost">เลือกทั้งหมด</button><button id="noP" class="ghost">ล้าง</button></div>
       <div class="pages" id="pages"></div>
       <textarea id="custom" rows="3" placeholder="Custom: วาง URL หรือ path บรรทัดละ 1 เช่น /news/123456/"></textarea>
-      <h2 style="margin-top:12px">3. อุปกรณ์</h2>
-      <div class="row seg"><button data-dev="desktop" class="on">Desktop</button><button data-dev="mobile">Mobile</button></div>
-      <div class="row"><button class="pri" id="make">สร้างลิงก์</button><button id="openAll" disabled>เปิดทั้งหมด</button></div>
+      <div class="step"><span class="num">3</span>อุปกรณ์</div>
+      <div class="seg" id="dev"><button data-dev="desktop" class="on">🖥 Desktop</button><button data-dev="mobile">📱 Mobile</button><button data-dev="both">ทั้งคู่</button></div>
+      <div class="row" style="margin-top:16px"><button class="pri grow" id="make">สร้างลิงก์</button><button id="openAll" disabled>เปิดทั้งหมด</button></div>
       <div class="err" id="aerr"></div>
       <div class="links" id="links"></div>
     </div></aside>
@@ -138,7 +191,7 @@ function renderList() {
           .map((x) => `<option value="${x}" ${x === slot ? 'selected' : ''}>${SLOT_TH[x]}</option>`).join('');
         h += `<div class="cr ${s ? 'sel' : ''} ${it.supported ? '' : 'off'}" data-key="${esc(key)}">
           <div class="thumb">${it.type === 'img' ? `<img src="${esc(it.url)}" loading="lazy" alt="">` : `<span class="mute">${it.type === 'html5' ? 'HTML5' : 'ไม่รองรับ'}</span>`}</div>
-          <div style="font-size:13px">${esc(it.creativeName)}</div>
+          <div class="cname" title="${esc(it.creativeName)}">${esc(it.creativeName)}</div>
           <div><span class="tag">${it.w}×${it.h}</span> ${it.slotGuessed ? '<span class="tag warn">เลือก slot เอง</span>' : ''}</div>
           ${it.supported ? `<select data-slot="${esc(key)}">${slotOpts}</select>` : ''}
         </div>`;
@@ -161,7 +214,7 @@ $('#list').addEventListener('click', (e) => {
     for (const c of it.categories || []) { const cb = $(`#pages input[data-cat="${c}"]`); if (cb) cb.checked = true; }
   }
   card.classList.toggle('sel', sel.has(key));
-  $('#nsel').textContent = sel.size;
+  setCount();
 });
 $('#list').addEventListener('change', (e) => {
   const key = e.target.dataset.slot; if (!key) return;
@@ -169,7 +222,15 @@ $('#list').addEventListener('change', (e) => {
 });
 $('#q').oninput = renderList;
 $('#refresh').onclick = () => load(true);
-$('#clearSel').onclick = () => { sel.clear(); $('#nsel').textContent = 0; renderList(); };
+$('#clearSel').onclick = () => { sel.clear(); setCount(); renderList(); };
+function setCount() { $('#nsel').textContent = sel.size; $('#nsel').classList.toggle('on', sel.size > 0); }
+function paintTheme() { $('#theme').textContent = document.documentElement.dataset.theme === 'dark' ? '☀️' : '🌙'; }
+$('#theme').onclick = () => {
+  const t = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+  document.documentElement.dataset.theme = t; try { localStorage.setItem('dnap-theme', t); } catch (e) {}
+  paintTheme();
+};
+paintTheme();
 $('#allP').onclick = () => document.querySelectorAll('#pages input').forEach((c) => (c.checked = true));
 $('#noP').onclick = () => document.querySelectorAll('#pages input').forEach((c) => (c.checked = false));
 document.querySelectorAll('.seg button').forEach((b) => (b.onclick = () => {
@@ -208,24 +269,29 @@ $('#make').onclick = async () => {
       const { token } = await api('/api/sign', { method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ items: g.map(({ slot, item }) => ({ slot, type: item.type, w: item.w, h: item.h, url: item.url, clickUrl: item.clickUrl })) }) });
       const label = g.map((x) => `${SLOT_TH[x.slot]}: ${x.item.creativeName}`).join(' + ');
-      for (const u of urls) links.push({ href: u + (u.includes('?') ? '&' : '?') + 'dn_mock=' + encodeURIComponent(token), label, page: u });
+      const devs = device === 'both' ? ['desktop', 'mobile'] : [device];
+      for (const u of urls) for (const dev of devs)
+        links.push({ href: u + (u.includes('?') ? '&' : '?') + 'dn_mock=' + encodeURIComponent(token), label, page: u, dev });
     }
   } catch (e) { $('#aerr').textContent = 'สร้างลิงก์ไม่สำเร็จ: ' + e.message; return; }
-  $('#links').innerHTML = links.map((l, i) => `<a href="${esc(l.href)}" data-i="${i}" target="_blank" rel="noopener">${esc(l.page.replace(/^https:\/\/[^/]+/, ''))}<br><span class="mute">${esc(l.label)}</span></a>`).join('');
+  $('#links').innerHTML = links.map((l, i) => `<a href="${esc(l.href)}" data-i="${i}" target="_blank" rel="noopener">
+      <span class="tag ${l.dev === 'mobile' ? 'm' : 'd'}">${l.dev === 'mobile' ? '📱 Mobile' : '🖥 Desktop'}</span>
+      <span><div class="p">${esc(l.page.replace(/^https:\/\/[^/]+/, '') || '/')}</div><div class="l">${esc(l.label)}</div></span></a>`).join('');
   $('#openAll').disabled = false;
 };
 
-function openLink(href, i) {
-  if (device === 'mobile') return window.open(href, 'dnap' + i, 'width=390,height=844');
-  return window.open(href, '_blank');
+function openLink(l, i) {
+  if (l.dev === 'mobile') return window.open(l.href, 'dnap' + i, 'width=390,height=844');
+  return window.open(l.href, '_blank');
 }
 $('#links').addEventListener('click', (e) => {
-  const a = e.target.closest('a'); if (!a || device !== 'mobile') return;
-  e.preventDefault(); openLink(a.href, a.dataset.i);
+  const a = e.target.closest('a'); if (!a) return;
+  const l = links[+a.dataset.i]; if (!l || l.dev !== 'mobile') return;
+  e.preventDefault(); openLink(l, a.dataset.i);
 });
 $('#openAll').onclick = () => {
   let blocked = 0;
-  links.forEach((l, i) => { if (!openLink(l.href, i)) blocked++; });
+  links.forEach((l, i) => { if (!openLink(l, i)) blocked++; });
   if (blocked) $('#aerr').textContent = `เบราว์เซอร์บล็อก ${blocked} หน้า — กดอนุญาต pop-up ของเว็บนี้ แล้วกดอีกครั้ง`;
 };
 
