@@ -62,9 +62,10 @@ t('buildItems: slot by ad unit ID, date filter, guessed slot, categories', () =>
                      customTargeting: { children: { children: { keyId: '1', valueIds: '9', _x: 'crime' } } } } },
       { id: '11', orderId: '5', name: 'LI parent', status: 'DELIVERING', startDateTime: d(2026, 11, 1), endDateTime: d(2026, 11, 30),
         targeting: { inventoryTargeting: { targetedAdUnits: { adUnitId: '999' } } } },
-      { id: '12', orderId: '5', name: 'LI future', status: 'READY', startDateTime: d(2026, 12, 1), endDateTime: d(2026, 12, 30), targeting: {} },
+      { id: '12', orderId: '5', name: 'LI soon', status: 'READY', startDateTime: d(2026, 12, 1), endDateTime: d(2026, 12, 30), targeting: {} },
+      { id: '13', orderId: '5', name: 'LI far', status: 'READY', startDateTime: d(2027, 2, 1), endDateTime: d(2027, 2, 28), targeting: {} },
     ],
-    licas: [{ lineItemId: '10', creativeId: '100' }, { lineItemId: '11', creativeId: '101' }, { lineItemId: '12', creativeId: '100' }],
+    licas: [{ lineItemId: '10', creativeId: '100' }, { lineItemId: '11', creativeId: '101' }, { lineItemId: '12', creativeId: '100' }, { lineItemId: '13', creativeId: '100' }],
     creatives: [
       { id: '100', name: 'Banner', _type: 'ImageCreative', size: { width: '970', height: '250' }, primaryImageAsset: { assetUrl: 'https://i/1.jpg' }, destinationUrl: 'https://c' },
       { id: '101', name: 'Rect', _type: 'Html5Creative', size: { width: '300', height: '250' }, html5Asset: { assetUrl: 'https://z' } },
@@ -72,7 +73,9 @@ t('buildItems: slot by ad unit ID, date filter, guessed slot, categories', () =>
     orders: [{ id: '5', name: 'Order', advertiserId: '7' }],
     companies: [{ id: '7', name: 'ลูกค้า A' }],
   });
-  assert.strictEqual(items.length, 2);
+  assert.strictEqual(items.length, 3); // far-future (>30 days) dropped
+  assert.strictEqual(items.find((i) => i.lineItemId === '12').upcoming, true);
+  assert.strictEqual(items.find((i) => i.lineItemId === '10').upcoming, false);
   const lb = items.find((i) => i.lineItemId === '10');
   assert.deepStrictEqual(lb.slots, ['leaderboard', 'postarticle']);
   assert.strictEqual(lb.slotGuessed, false);
