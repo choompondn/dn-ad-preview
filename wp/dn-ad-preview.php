@@ -2,7 +2,7 @@
 /**
  * Plugin Name: DN Ad Preview (mock creatives)
  * Description: เมื่อเปิดหน้าด้วย ?dn_mock=<token> ที่ลงลายเซ็นจาก DN Ad Preview จะแสดง creative ที่ระบุแทนการเรียกโฆษณาจาก GAM ใน slot นั้น
- * Version: 1.0.0
+ * Version: 1.0.1
  *
  * ติดตั้ง: วางไฟล์นี้ใน wp-content/mu-plugins/ และเพิ่มใน wp-config.php
  *   define( 'DN_AD_PREVIEW_SECRET', '<ค่าเดียวกับ MOCK_SECRET ใน Vercel>' );
@@ -108,7 +108,17 @@ add_action( 'wp_head', function () {
       return origRefresh.call(this, slots, opts);
     };
   });
-  document.addEventListener('DOMContentLoaded', function(){ for (var id in M) render(id); });
+  // กันกรณี div ถูกสร้าง/ย้าย/ล้างทีหลัง (เช่น sticky บนมือถือ): ตรวจซ้ำจนกว่าจะเจอ
+  function sweep(){
+    for (var id in M) {
+      var el = document.getElementById(id);
+      if (el && el.getAttribute('data-dn-mock') && !el.querySelector('img,iframe')) el.removeAttribute('data-dn-mock');
+      render(id);
+    }
+  }
+  document.addEventListener('DOMContentLoaded', sweep);
+  window.addEventListener('load', sweep);
+  var n = 0, t = setInterval(function(){ sweep(); if (++n > 40) clearInterval(t); }, 500);
 })();
 </script>
 	<?php
